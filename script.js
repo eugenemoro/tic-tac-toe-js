@@ -1,21 +1,31 @@
 const Gameboard = (function(){
   let gameboardArray = [[,,,],[,,,],[,,,]];
+  let elementCount = 0;
+  
   const clearGameBoard = () => {
     gameboardArray = [[,,,],[,,,],[,,,]];
+    elementCount = 0;
   }
+  
   const addMarker = (row, column, marker) => {
     if (!gameboardArray[row][column]) {
       gameboardArray[row][column] = marker;
+      elementCount++;
     } else {
       return false;
     }
     return true;
   }
+
+  const isFull = () => elementCount === 9;
+  
   const getGameBoard = () => gameboardArray;
+  
   return {
     clearGameBoard,
     addMarker,
-    getGameBoard
+    getGameBoard,
+    isFull
   };
 })();
 
@@ -34,6 +44,57 @@ const User = function(newName, newMarker) {
   };
 }
 
+const DisplayController = (function(){
+  const updateScoreDisplay = function(){
+    const scoreDisplay = document.querySelector('.score h1');
+    scoreDisplay.innerHTML = GameController.getScore();
+  }
+
+  const userInfoDisplay = function(user1, user2){
+    const user1Display = document.querySelectorAll('.user-left > *');
+    user1Display[0].innerHTML = user1.getName();
+    user1Display[1].innerHTML = markerToEmoji(user1.getMarker());
+
+    const user2Display = document.querySelectorAll('.user-right > *');
+    user2Display[0].innerHTML = user2.getName();
+    user2Display[1].innerHTML = markerToEmoji(user2.getMarker());
+  }
+
+  const gameboardEventListener = (function() {
+    const gameboard = document.querySelector('.game-board');
+    gameboard.addEventListener('click', (e) => {
+      const row = e.target.dataset.row;
+      const column = e.target.dataset.column;
+      GameController.takeTurn(row, column);
+    });
+  })();
+
+  const gameboardDisplay = function(gameboard) {
+    for (i = 0; i < gameboard.length; i++) {
+      for (j = 0; j < gameboard[i].length; j++) {
+        if (gameboard[i][j]) document.querySelector(`[data-row='${i}'][data-column='${j}']`).innerHTML = markerToEmoji(gameboard[i][j]);
+      }
+    }
+  }
+
+  const clearGameBoardDisplay = function() {
+    for (i = 0; i < 3; i++) {
+      for (j = 0; j < 3; j++) {
+        document.querySelector(`[data-row='${i}'][data-column='${j}']`).innerHTML = '';
+      }
+    }
+  }
+
+  const markerToEmoji = (marker) => marker === 'X' ? '❌' : '⭕️';
+
+  return {
+    updateScoreDisplay,
+    userInfoDisplay,
+    gameboardDisplay,
+    clearGameBoardDisplay
+  }
+})();
+
 const GameController = (function() {
   const user1 = new User();
   const user2 = new User();
@@ -42,16 +103,18 @@ const GameController = (function() {
   let currentTurn = 'X';
 
   const initializeUsers = (function(){
-    user1.setName('Jack');
-    user2.setName('Jill');
+    user1.setName('John');
+    user2.setName('Jane');
     user1.setMarker('X');
     user2.setMarker('O');
+    DisplayController.userInfoDisplay(user1, user2);
   })();
 
   const takeTurn = (row, column) => {
     if (Gameboard.addMarker(row, column, currentTurn)) {
-      console.log(`${currentTurn} on row: ${row} / column: ${column}`);
+      DisplayController.gameboardDisplay(Gameboard.getGameBoard());
       checkGameboardConditions();
+      console.log(`${currentTurn} - row: ${row} / column: ${column}`);
     } else {
       console.log('Cell is already occupied!');
     }
@@ -59,25 +122,24 @@ const GameController = (function() {
 
   const checkGameboardConditions = () => {
     const currentGameboard = Gameboard.getGameBoard();
+    switchTurns();
     for (let i = 0; i < currentGameboard.length; i++) {
       if ((currentGameboard[i][0] === currentGameboard[i][1]) && (currentGameboard[i][1] === currentGameboard[i][2]) && (currentGameboard[i][2] !== undefined)) {
-        console.log('checkGameboardConditions #1');
         win(currentGameboard[i][0]);
         break;
       } else if ((currentGameboard[0][i] === currentGameboard[1][i]) && (currentGameboard[1][i] === currentGameboard[2][i]) && (currentGameboard[2][i] !== undefined)) {
-        console.log('checkGameboardConditions #2');
         win(currentGameboard[0][i]);
         break;
       }
     }
     if ((currentGameboard[0][0] === currentGameboard[1][1]) && (currentGameboard[1][1] === currentGameboard[2][2])  && (currentGameboard[2][2] !== undefined)) {
-      console.log('checkGameboardConditions #3');
       win(currentGameboard[0][0]);
     } else if ((currentGameboard[2][0] === currentGameboard[1][1]) && (currentGameboard[1][1] === currentGameboard[0][2]) && (currentGameboard[0][2] !== undefined)) {
-      console.log('checkGameboardConditions #4');
       win(currentGameboard[2][0]);
+    } else if (Gameboard.isFull()) {
+      console.log('Deuce!');
+      nextGame();
     }
-    switchTurns();
   };
 
   const switchTurns = () => {
@@ -92,24 +154,28 @@ const GameController = (function() {
       user1.setMarker('X');
       user2.setMarker('O');
     }
+    DisplayController.userInfoDisplay(user1, user2);
+    currentTurn = 'X';
   };
 
   const win = (marker) => {
-    console.log('win!');
     if (marker === user1.getMarker()) {
-      console.log(`Winner is ${user1.getName()}`);
       scoreUser1++;
     } else {
-      console.log(`Winner is ${user2.getName()}`);
       scoreUser2++;
     }
-    Gameboard.clearGameBoard();
-    switchMarkers();
+    nextGame();
   };
 
+  const nextGame = function() {
+    Gameboard.clearGameBoard();
+    switchMarkers();
+    DisplayController.updateScoreDisplay();
+    DisplayController.clearGameBoardDisplay();
+  }
+
   const getScore = () => {
-    console.log(`${user1.getName()}: ${scoreUser1} - ${user2.getName()}: ${scoreUser2}`);
-    return [scoreUser1, scoreUser2];
+    return `${scoreUser1} - ${scoreUser2}`;
   };
 
   return {
@@ -117,3 +183,4 @@ const GameController = (function() {
     getScore
   };
 })();
+
