@@ -3,7 +3,24 @@
 *::before {
   padding: 0;
   margin: 0;
+  box-sizing: border-box;
   font-family: sans-serif;
+}
+
+dialog[open] {
+  margin: 1rem auto;
+  padding: 1rem;
+  display: grid;
+  gap: .5rem
+}
+
+button {
+  padding: .5rem 2rem;
+  appearance: none;
+  border: none;
+  background-color: navy;
+  color: white;
+  border-radius: 5px;
 }
 
 .game-wrapper {
@@ -11,26 +28,41 @@
   margin-right: auto;
   margin-top: 1rem;
   max-width: 600px;
+  gap: 1rem;
   display: grid;
-  grid-column: repeat(5, 1fr);
-  grid-row: repeat(4, 1fr);
+  grid-column: repeat(3, minmax(180px, 1fr));
+  grid-row: repeat(5, 1fr);
   grid-template-areas: 
-    "user-left game-board game-board game-board user-right"
-    "user-left game-board game-board game-board user-right"
-    "user-left game-board game-board game-board user-right"
-    "score     score      score      score      score";
+    "user-left game-board user-right"
+    "user-left game-board user-right"
+    "user-left game-board user-right"
+    "score     score      score"
+    "footer    footer     footer";
+}
+
+div[class^='user-'] {
+  min-width: 180px;
+  justify-self: stretch;
+  align-self: stretch;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .user-left {
   grid-area: user-left;
-  justify-self: center;
-  align-self: center;
+  border: 1px solid darkgrey;
 }
 
 .user-right {
   grid-area: user-right;
-  justify-self: center;
-  align-self: center;
+  border: 1px solid darkgrey;
+}
+
+.active {
+  box-shadow: 1px 1px 10px green;;
 }
 
 .user-name {
@@ -65,4 +97,9 @@
   margin-top: 1rem;
   grid-area: score;
   justify-self: center;
+}
+
+.footer {
+  margin-top: 1rem;
+  grid-area: footer;
 }

@@ -8,13 +8,28 @@
 </head>
 <body>
   <div class="game-wrapper">
+    <dialog id="start-game-dialog">
+      <div class="player-name-input">
+        <label for="player1">Player 1:</label>
+        <input type="text" id="player1" class="input-field">
+      </div>
+      <div class="player-name-input">
+        <label for="player2">Player 2:</label>
+        <input type="text" id="player2" class="input-field">
+      </div>
+      <div>
+        <button id="start-game-button">Start</button>
+      </div>
+    </dialog>
     <div class="user-left">
       <div class="user-name"></div>
       <div class="user-marker"></div>
+      <div class="user-turn"></div>
     </div>
     <div class="user-right">
       <div class="user-name"></div>
       <div class="user-marker"></div>
+      <div class="user-turn"></div>
     </div>
     <div class="game-board">
       <div class="game-board-sector" data-row="0" data-column="0"></div>
@@ -28,6 +43,9 @@
       <div class="game-board-sector" data-row="2" data-column="2"></div>
     </div>
     <div class="score"><h1></h1></div>
+    <div class="game-controls">
+      <button id="restart-game-button">Restart</button>
+    </div>
   </div>
 </body>
 <script src="script.js"></script>

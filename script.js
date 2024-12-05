@@ -1,3 +1,4 @@
+
 const Gameboard = (function(){
   let gameboardArray = [[,,,],[,,,],[,,,]];
   let elementCount = 0;
@@ -45,19 +46,51 @@ const User = function(newName, newMarker) {
 }
 
 const DisplayController = (function(){
+  const startGameDialog = document.getElementById('start-game-dialog');
+
+  const showStartGameDialog = function() {
+    startGameDialog.showModal();
+  }
+
+  const startGameDialogEventListener = (function(){
+    const userNameField1 = document.getElementById('player1');
+    const userNameField2 = document.getElementById('player2');
+    const startButton = document.getElementById('start-game-button');
+    startButton.addEventListener('click', () => {
+      GameController.initializeUsers(userNameField1.value, userNameField2.value);
+      startGameDialog.close();
+    });
+  })();
+
   const updateScoreDisplay = function(){
     const scoreDisplay = document.querySelector('.score h1');
     scoreDisplay.innerHTML = GameController.getScore();
   }
 
-  const userInfoDisplay = function(user1, user2){
+  const userInfoDisplay = function(user1, user2, currentTurn){
     const user1Display = document.querySelectorAll('.user-left > *');
     user1Display[0].innerHTML = user1.getName();
     user1Display[1].innerHTML = markerToEmoji(user1.getMarker());
+    const user1DisplayMain = document.querySelector('.user-left');
+    if (user1.getMarker() === currentTurn) {
+      user1Display[2].innerHTML = 'Player 1 Turn';
+      user1DisplayMain.classList.add('active');
+    } else {
+      user1Display[2].innerHTML = '';
+      user1DisplayMain.classList.remove('active');
+    }
 
     const user2Display = document.querySelectorAll('.user-right > *');
     user2Display[0].innerHTML = user2.getName();
     user2Display[1].innerHTML = markerToEmoji(user2.getMarker());
+    const user2DisplayMain = document.querySelector('.user-right');
+    if (user2.getMarker() === currentTurn) {
+      user2Display[2].innerHTML = 'Player 2 Turn';
+      user2DisplayMain.classList.add('active');
+    } else {
+      user2Display[2].innerHTML = '';
+      user2DisplayMain.classList.remove('active');
+    }
   }
 
   const gameboardEventListener = (function() {
@@ -65,8 +98,22 @@ const DisplayController = (function(){
     gameboard.addEventListener('click', (e) => {
       const row = e.target.dataset.row;
       const column = e.target.dataset.column;
-      GameController.takeTurn(row, column);
+      if (!GameController.takeTurn(row, column)) {
+        e.target.animate(
+          [
+            { backgroundColor: 'red', easing: "ease-out" },
+            { backgroundColor: 'white', easing: "ease-in" },
+            { backgroundColor: 'white' },
+          ],
+          2000,
+        );
+      };
     });
+  })();
+
+  const restartGameEventListener = (function(){
+    const restartButton = document.getElementById('restart-game-button');
+    restartButton.addEventListener('click', () => GameController.restartGame());
   })();
 
   const gameboardDisplay = function(gameboard) {
@@ -91,7 +138,8 @@ const DisplayController = (function(){
     updateScoreDisplay,
     userInfoDisplay,
     gameboardDisplay,
-    clearGameBoardDisplay
+    clearGameBoardDisplay,
+    showStartGameDialog
   }
 })();
 
@@ -101,23 +149,40 @@ const GameController = (function() {
   let scoreUser1 = 0;
   let scoreUser2 = 0;
   let currentTurn = 'X';
+  let newGame = true;
 
-  const initializeUsers = (function(){
-    user1.setName('John');
-    user2.setName('Jane');
+  const restartGame = function() {
+    scoreUser1 = 0;
+    scoreUser2 = 0;
+    DisplayController.showStartGameDialog();
+  }
+
+  if (newGame) {
+    newGame = false;
+    restartGame();
+  }
+
+  const initializeUsers = (userName1, userName2) => {
+    user1.setName(userName1);
+    user2.setName(userName2);
     user1.setMarker('X');
     user2.setMarker('O');
-    DisplayController.userInfoDisplay(user1, user2);
-  })();
+    scoreUser1 = 0;
+    scoreUser2 = 0;
+    DisplayController.userInfoDisplay(user1, user2, currentTurn);
+    DisplayController.updateScoreDisplay();
+  };
 
   const takeTurn = (row, column) => {
     if (Gameboard.addMarker(row, column, currentTurn)) {
       DisplayController.gameboardDisplay(Gameboard.getGameBoard());
       checkGameboardConditions();
-      console.log(`${currentTurn} - row: ${row} / column: ${column}`);
     } else {
       console.log('Cell is already occupied!');
+      return false;
     }
+    DisplayController.userInfoDisplay(user1, user2, currentTurn);
+    return true;
   };
 
   const checkGameboardConditions = () => {
@@ -137,7 +202,6 @@ const GameController = (function() {
     } else if ((currentGameboard[2][0] === currentGameboard[1][1]) && (currentGameboard[1][1] === currentGameboard[0][2]) && (currentGameboard[0][2] !== undefined)) {
       win(currentGameboard[2][0]);
     } else if (Gameboard.isFull()) {
-      console.log('Deuce!');
       nextGame();
     }
   };
@@ -154,8 +218,8 @@ const GameController = (function() {
       user1.setMarker('X');
       user2.setMarker('O');
     }
-    DisplayController.userInfoDisplay(user1, user2);
     currentTurn = 'X';
+    DisplayController.userInfoDisplay(user1, user2, currentTurn);
   };
 
   const win = (marker) => {
@@ -180,7 +244,9 @@ const GameController = (function() {
 
   return {
     takeTurn,
-    getScore
+    getScore,
+    initializeUsers,
+    restartGame
   };
 })();
 
